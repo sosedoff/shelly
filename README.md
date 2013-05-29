@@ -43,3 +43,11 @@ To transmit over JSON, run:
 ```
 cmd.ToJson()
 ```
+
+## Test
+
+There are no tests yet :(
+
+## License
+
+See `LICENSE` for details.
