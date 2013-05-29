@@ -29,7 +29,7 @@ func (cmd *Command) Run(command string) {
 
   err := shell.Start()
   if (err != nil) {
-    fmt.Println("EXEC FAILED:", err)
+    fmt.Println("Execution failed:", err)
   }
 
   err = shell.Wait()
