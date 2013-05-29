@@ -85,7 +85,20 @@ func Exec(str string) *Command {
   return command
 }
 
+func WriteWelcome(socket net.Conn) error {
+  msg := fmt.Sprintf("Shelly v%s\n", SHELLY_VERSION)
+  _, err := socket.Write([]byte(msg))
+
+  return err
+}
+
 func HandleConnection(socket net.Conn) {
+  if WriteWelcome(socket) != nil {
+    fmt.Println("Failed to welcome connection")
+    socket.Close()
+    return
+  }
+
   buffer := make([]byte, BUFFER_SIZE)
 
   for {
