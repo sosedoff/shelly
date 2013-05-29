@@ -85,18 +85,32 @@ func Exec(str string) *Command {
 }
 
 func HandleConnection(socket net.Conn) {
-  buffer   := make([]byte, BUFFER_SIZE)
-  num, err := socket.Read(buffer)
+  buffer := make([]byte, BUFFER_SIZE)
+
+  for {
+    num, err := socket.Read(buffer)
   
-  if err != nil {
-    fmt.Println("Read error:", err.Error())
-    return
+    if err != nil {
+      fmt.Println("Read error:", err.Error())
+      break
+    }
+
+    cmd := strings.TrimSpace(string(buffer[0:num]))
+
+    if (len(cmd) == 0) {
+      continue
+    }
+
+    if (cmd == "!done") {
+      break
+    }
+
+    fmt.Println("Executing:", cmd)
+    result := Exec(cmd)
+    _, err = socket.Write([]byte(result.ToJson()))
   }
 
-  cmd    := strings.TrimSpace(string(buffer[0:num]))
-  result := Exec(cmd)
-
-  _, err = socket.Write([]byte(result.Output))
+  fmt.Println("Client connection closed")
   socket.Close()
 }
 
