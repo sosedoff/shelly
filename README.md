@@ -44,6 +44,20 @@ To transmit over JSON, run:
 cmd.ToJson()
 ```
 
+Start server:
+
+```
+go run main.go
+```
+
+TCP server will be created on `0.0.0.0:20000`. Try telnet:
+
+```
+telnet localhost 20000
+```
+
+Each input line will be executed as bash command.
+
 ## Test
 
 There are no tests yet :(
