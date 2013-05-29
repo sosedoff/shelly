@@ -13,8 +13,9 @@ import (
 )
 
 const (
-  BIND_ADDR   = "0.0.0.0:20000"
-  BUFFER_SIZE = 1024
+  SHELLY_VERSION = "0.1.0"
+  BIND_ADDR      = "0.0.0.0:20000"
+  BUFFER_SIZE    = 1024
 )
 
 type Command struct {
