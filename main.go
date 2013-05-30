@@ -15,8 +15,10 @@ import (
 const (
   SHELLY_VERSION = "0.1.0"
   BIND_ADDR      = "0.0.0.0:20000"
-  BUFFER_SIZE    = 1024
+  BUFFER_SIZE    = 4096
 )
+
+var authToken string
 
 type Command struct {
   Command    string         `json:"command"`
@@ -92,14 +94,34 @@ func WriteWelcome(socket net.Conn) error {
   return err
 }
 
+func ConnectionValid(socket net.Conn, buffer []byte) bool {
+  num, err := socket.Read(buffer)
+
+  if err != nil {
+    return false
+  }
+
+  token := strings.TrimSpace(string(buffer[0:num]))
+
+  return token == authToken
+}
+
 func HandleConnection(socket net.Conn) {
+  buffer := make([]byte, BUFFER_SIZE)
+
+  /* Verify client token */
+  if !ConnectionValid(socket, buffer) {
+    fmt.Println("Client verification failed")
+    socket.Close()
+    return
+  }
+
+  /* Write welcome message */
   if WriteWelcome(socket) != nil {
     fmt.Println("Failed to welcome connection")
     socket.Close()
     return
   }
-
-  buffer := make([]byte, BUFFER_SIZE)
 
   for {
     num, err := socket.Read(buffer)
@@ -129,6 +151,13 @@ func HandleConnection(socket net.Conn) {
 }
 
 func main() {
+  authToken = os.Getenv("SHELLY_TOKEN")
+
+  if len(authToken) == 0 {
+    fmt.Println("Please set SHELLY_TOKEN variable")
+    os.Exit(1)
+  }
+
   fmt.Printf("Starting server on %s\n", BIND_ADDR)
 
   server, err := net.Listen("tcp", BIND_ADDR)
