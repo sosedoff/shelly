@@ -14,8 +14,8 @@ import (
 
 const (
   SHELLY_VERSION = "0.1.0"
-  BIND_ADDR      = "0.0.0.0:20000"
-  BUFFER_SIZE    = 4096
+  SHELLY_BIND    = "0.0.0.0:20000"
+  SHELLY_BUFFER  = 4096
 )
 
 var authToken string
@@ -107,7 +107,7 @@ func ConnectionValid(socket net.Conn, buffer []byte) bool {
 }
 
 func HandleConnection(socket net.Conn) {
-  buffer := make([]byte, BUFFER_SIZE)
+  buffer := make([]byte, SHELLY_BUFFER)
 
   /* Verify client token */
   if !ConnectionValid(socket, buffer) {
@@ -158,9 +158,9 @@ func main() {
     os.Exit(1)
   }
 
-  fmt.Printf("Starting server on %s\n", BIND_ADDR)
+  fmt.Printf("Starting server on %s\n", SHELLY_BIND)
 
-  server, err := net.Listen("tcp", BIND_ADDR)
+  server, err := net.Listen("tcp", SHELLY_BIND)
   if err != nil {
     fmt.Println("Error:", err.Error())
     os.Exit(1)
