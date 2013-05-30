@@ -15,7 +15,7 @@ There are no external dependencies. Clone repository and you should be good to g
 ```
 git clone git://github.com/sosedoff/shelly.git
 cd shelly
-go build main.go
+go build shelly.go
 ```
 
 ## Usage
@@ -44,23 +44,27 @@ To transmit over JSON, run:
 cmd.ToJson()
 ```
 
+Make sure you export authentication token:
+
+```
+export SHELLY_TOKEN=hello
+```
+
 Start server:
 
 ```
-go run main.go
+go run shelly.go
 ```
 
-TCP server will be created on `0.0.0.0:20000`. Try telnet:
+TCP server will be created on `0.0.0.0:20000`. 
+
+Try telnet:
 
 ```
 telnet localhost 20000
 ```
 
 Each input line will be executed as bash command.
-
-## Test
-
-There are no tests yet :(
 
 ## License
 
