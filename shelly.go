@@ -150,17 +150,27 @@ func HandleConnection(socket net.Conn) {
   socket.Close()
 }
 
-func main() {
-  authToken = os.Getenv("SHELLY_TOKEN")
+func EnvVarDefined(name string) bool {
+  result := os.Getenv(name)
+  return len(result) > 0
+}
 
-  if len(authToken) == 0 {
-    fmt.Println("Please set SHELLY_TOKEN variable")
+func main() {
+  if !EnvVarDefined("SHELLY_TOKEN") {
+    fmt.Println("SHELLY_TOKEN environment variable required")
     os.Exit(1)
   }
 
-  fmt.Printf("Starting server on %s\n", SHELLY_BIND)
+  authToken = os.Getenv("SHELLY_TOKEN")
+  bindAddr := SHELLY_BIND
 
-  server, err := net.Listen("tcp", SHELLY_BIND)
+  if EnvVarDefined("SHELLY_BIND") {
+    bindAddr = os.Getenv("SHELLY_BIND")
+  }
+
+  fmt.Printf("Starting server on %s\n", bindAddr)
+
+  server, err := net.Listen("tcp", bindAddr)
   if err != nil {
     fmt.Println("Error:", err.Error())
     os.Exit(1)
