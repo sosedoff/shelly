@@ -133,12 +133,17 @@ func HandleConnection(socket net.Conn) {
 
     cmd := strings.TrimSpace(string(buffer[0:num]))
 
-    if (len(cmd) == 0) {
+    if len(cmd) == 0 {
       continue
     }
 
-    if (cmd == "!done") {
+    if cmd == "!done" {
       break
+    }
+
+    if cmd == "!ping" {
+      _, err = socket.Write([]byte("Pong\n"))
+      continue
     }
 
     fmt.Println("Executing:", cmd)
