@@ -137,7 +137,7 @@ func HandleConnection(socket net.Conn) {
       continue
     }
 
-    if cmd == "!done" {
+    if cmd == "!exit" {
       break
     }
 
