@@ -168,6 +168,7 @@ func main() {
     bindAddr = os.Getenv("SHELLY_BIND")
   }
 
+  fmt.Printf("Shelly v%s\n", SHELLY_VERSION)
   fmt.Printf("Starting server on %s\n", bindAddr)
 
   server, err := net.Listen("tcp", bindAddr)
