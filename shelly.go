@@ -57,7 +57,7 @@ func HandleShellRequest(w http.ResponseWriter, req *http.Request) {
   w.Header().Set("X-SHELLY-STATUS", string(cmd.ExitStatus))
 
   w.WriteHeader(200)
-  w.Write([]byte(cmd.Output))
+  w.Write([]byte(cmd.ToJson()))
   w.(http.Flusher).Flush()
 }
 
