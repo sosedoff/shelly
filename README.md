@@ -56,15 +56,32 @@ Start server:
 go run shelly.go
 ```
 
-TCP server will be created on `0.0.0.0:20000`. 
+HTTP server will be created on `0.0.0.0:20000`.
 
-Try telnet:
+To run request use:
 
 ```
-telnet localhost 20000
+POST http://localhost:20000/run
 ```
 
-Each input line will be executed as bash command.
+Example with Curl:
+
+```
+curl -i -X POST -H "X-AUTH-TOKEN: foobar" --data="git --version" http://localhost:20000
+```
+
+Output:
+
+```json
+{
+  "command": "git --version",
+  "exit_status": 0,
+  "output": "git version 1.8.1.2\n",
+  "time_start": "2013-07-02T20:33:50.470918149Z",
+  "time_finish": "2013-07-02T20:33:50.476235898Z",
+  "duration": 10.2
+}
+```
 
 ## License
 
