@@ -8,14 +8,17 @@ import (
   "time"
   "bytes"
   "encoding/json"
-  "net"
-  "strings"
+  "net/http"
+  "io/ioutil"
+  "log"
 )
 
 const (
   SHELLY_VERSION = "0.1.0"
   SHELLY_BIND    = "0.0.0.0:20000"
   SHELLY_BUFFER  = 4096
+
+  ERR_UNAUTHORIZED = 401
 )
 
 var authToken string
@@ -27,6 +30,35 @@ type Command struct {
   TimeStart  time.Time      `json:"time_start"`
   TimeFinish time.Time      `json:"time_finish"`
   Duration   time.Duration  `json:"duration"`
+}
+
+func HandleShellRequest(w http.ResponseWriter, req *http.Request) {
+  token := req.Header.Get("X-AUTH-TOKEN")
+
+  if token != authToken {
+    w.WriteHeader(ERR_UNAUTHORIZED)
+    w.Write([]byte("Invalid authentication token\r\n"))
+    return
+  }
+
+  body, err := ioutil.ReadAll(req.Body)
+
+  if err != nil {
+    fmt.Println("Read error: ", err)
+     w.WriteHeader(400)
+    w.Write([]byte("Read error"))
+    return
+  }
+
+  cmd := Exec(string(body))
+  cmd.Print()
+
+  w.Header().Set("X-SHELLY-DURATION", cmd.Duration.String())
+  w.Header().Set("X-SHELLY-STATUS", string(cmd.ExitStatus))
+
+  w.WriteHeader(200)
+  w.Write([]byte(cmd.Output))
+  w.(http.Flusher).Flush()
 }
 
 func (cmd *Command) Run(command string) {
@@ -87,74 +119,6 @@ func Exec(str string) *Command {
   return command
 }
 
-func WriteWelcome(socket net.Conn) error {
-  msg := fmt.Sprintf("Shelly v%s\n", SHELLY_VERSION)
-  _, err := socket.Write([]byte(msg))
-
-  return err
-}
-
-func ConnectionValid(socket net.Conn, buffer []byte) bool {
-  num, err := socket.Read(buffer)
-
-  if err != nil {
-    return false
-  }
-
-  token := strings.TrimSpace(string(buffer[0:num]))
-
-  return token == authToken
-}
-
-func HandleConnection(socket net.Conn) {
-  buffer := make([]byte, SHELLY_BUFFER)
-
-  /* Verify client token */
-  if !ConnectionValid(socket, buffer) {
-    fmt.Println("Client verification failed")
-    socket.Close()
-    return
-  }
-
-  /* Write welcome message */
-  if WriteWelcome(socket) != nil {
-    fmt.Println("Failed to welcome connection")
-    socket.Close()
-    return
-  }
-
-  for {
-    num, err := socket.Read(buffer)
-  
-    if err != nil {
-      fmt.Println("Read error:", err.Error())
-      break
-    }
-
-    cmd := strings.TrimSpace(string(buffer[0:num]))
-
-    if len(cmd) == 0 {
-      continue
-    }
-
-    if cmd == "!exit" {
-      break
-    }
-
-    if cmd == "!ping" {
-      _, err = socket.Write([]byte("Pong\n"))
-      continue
-    }
-
-    fmt.Println("Executing:", cmd)
-    result := Exec(cmd)
-    _, err = socket.Write([]byte(result.ToJson()))
-  }
-
-  fmt.Println("Client connection closed")
-  socket.Close()
-}
-
 func EnvVarDefined(name string) bool {
   result := os.Getenv(name)
   return len(result) > 0
@@ -176,19 +140,6 @@ func main() {
   fmt.Printf("Shelly v%s\n", SHELLY_VERSION)
   fmt.Printf("Starting server on %s\n", bindAddr)
 
-  server, err := net.Listen("tcp", bindAddr)
-  if err != nil {
-    fmt.Println("Error:", err.Error())
-    os.Exit(1)
-  }
-
-  for {
-    socket, err := server.Accept()
-    if err != nil {
-      fmt.Println("Accept error:", err.Error())
-      return
-    }
-    
-    go HandleConnection(socket)
-  }
+  http.HandleFunc("/run", HandleShellRequest)
+  log.Fatal(http.ListenAndServe(bindAddr, nil))
 }
